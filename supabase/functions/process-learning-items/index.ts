@@ -39,6 +39,13 @@ function parseAnalysis(response: any) {
   };
 }
 
+function splitCapturedContent(rawContent: string | null) {
+  const [text = "", imagePart = ""] = (rawContent || "").split("[LEARNFLOW_IMAGE_URLS]", 2);
+  const imageUrls = imagePart.split(/\r?\n/).map((value) => value.trim())
+    .filter((value) => /^https?:\/\//i.test(value)).slice(0, 9);
+  return { text: text.trim(), imageUrls };
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -60,7 +67,7 @@ Deno.serve(async (request) => {
     const limit = Math.min(Math.max(Number(body.limit) || 8, 1), 20);
     const { data: items, error: listError } = await client
       .from("learning_items")
-      .select("id,title,author,raw_content,source_url")
+      .select("id,title,author,raw_content,cover_url,source_url")
       .in("processing_status", ["pending", "failed", "processing"])
       .order("created_at", { ascending: true })
       .limit(limit);
@@ -69,29 +76,35 @@ Deno.serve(async (request) => {
     const results = await Promise.all((items || []).map(async (item) => {
       await client.from("learning_items").update({ processing_status: "processing" }).eq("id", item.id);
       try {
+        const captured = splitCapturedContent(item.raw_content);
+        const imageUrls = [...new Set([item.cover_url, ...captured.imageUrls].filter(Boolean))].slice(0, 9);
         const sourceMaterial = [
           `标题：${item.title || "未知"}`,
           `作者：${item.author || "未知"}`,
-          `页面可见内容：${item.raw_content || "未采集到正文，仅可根据标题判断"}`,
+          `页面可见正文：${captured.text || "未采集到正文，请结合图片中的公开信息判断"}`,
           `来源链接：${item.source_url}`,
         ].join("\n");
+        const userContent = imageUrls.length ? [
+          { type: "text", text: `${sourceMaterial}\n\n请阅读所附图片中的文字和画面信息，并与正文合并分析。` },
+          ...imageUrls.map((url) => ({ type: "image_url", image_url: { url, detail: "original" } })),
+        ] : sourceMaterial;
         const aiResponse = await fetch("https://api.deepseek.com/chat/completions", {
           method: "POST",
           headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "deepseek-v4-flash",
+            model: imageUrls.length ? "deepseek-v4-flash-vision-exp" : "deepseek-v4-flash",
             thinking: { type: "disabled" },
             messages: [
               {
                 role: "system",
                 content: `你是个人学习知识管理助手。根据用户已合法采集的页面可见信息生成忠实摘要与三级标签。材料不足时明确写出信息有限，不得虚构正文、观点或结论。只输出一个 JSON 对象，字段必须为 summary、category、subcategory、content_type。category 只能从 ${categoryOptions.join("、")} 中选择；content_type 只能从 ${contentTypeOptions.join("、")} 中选择。`,
               },
-              { role: "user", content: sourceMaterial },
+              { role: "user", content: userContent },
             ],
             response_format: { type: "json_object" },
             max_tokens: 500,
           }),
-          signal: AbortSignal.timeout(20_000),
+          signal: AbortSignal.timeout(imageUrls.length ? 40_000 : 20_000),
         });
         if (!aiResponse.ok) throw new Error(`DeepSeek ${aiResponse.status}: ${await aiResponse.text()}`);
         const analysis = parseAnalysis(await aiResponse.json());

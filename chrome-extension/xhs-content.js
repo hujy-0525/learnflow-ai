@@ -74,8 +74,14 @@ function scrapeDetailNote() {
     '[class*="author-container"] [class*="name"]',
     '[class*="user"] [class*="name"]'
   ], 120) || structured.author?.name || null;
-  const cover = metaContent('meta[property="og:image"]', 'meta[name="twitter:image"]') ||
-    document.querySelector('[class*="note-detail"] img, [class*="swiper"] img, article img')?.src || null;
+  const detailImages = [...document.querySelectorAll('[class*="note-detail"] img, [class*="swiper"] img, [class*="carousel"] img, article img')]
+    .map(image => image.currentSrc || image.src)
+    .filter(url => /^https?:\/\//i.test(url))
+    .filter((url, index, all) => all.indexOf(url) === index)
+    .slice(0, 9);
+  const cover = metaContent('meta[property="og:image"]', 'meta[name="twitter:image"]') || detailImages[0] || null;
+  if (cover && !detailImages.includes(cover)) detailImages.unshift(cover);
+  const imageManifest = detailImages.length ? `\n\n[LEARNFLOW_IMAGE_URLS]\n${detailImages.slice(0, 9).join('\n')}` : '';
 
   return {
     source: 'xiaohongshu',
@@ -83,7 +89,7 @@ function scrapeDetailNote() {
     external_id: noteId,
     title: compactText(title, 300) || '小红书收藏笔记',
     author: compactText(author, 120),
-    raw_content: compactText(body, 12000),
+    raw_content: `${compactText(body, 12000) || ''}${imageManifest}`.trim() || null,
     cover_url: cover,
     sync_method: 'detail-page',
     processing_status: 'pending'

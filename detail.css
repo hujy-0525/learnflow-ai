@@ -1,0 +1,10 @@
+.item-detail { width: min(720px, calc(100vw - 32px)); max-height: 88vh; overflow: auto; text-align: left; }
+.detail-cover { width: 100%; max-height: 360px; object-fit: cover; border-radius: 18px; margin-bottom: 22px; background: #eef0eb; }
+.item-detail h2 { font-size: 28px; line-height: 1.25; margin: 8px 36px 14px 0; }
+.detail-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+.detail-tags span { padding: 6px 10px; border-radius: 999px; background: #efecff; color: #6351d7; font-size: 13px; }
+.item-detail section { padding: 18px 0; border-top: 1px solid #e8e9e5; }
+.item-detail section h3 { margin: 0 0 8px; }
+.item-detail section p { margin: 0; color: #505650; line-height: 1.75; }
+.detail-body { white-space: pre-wrap; max-height: 280px; overflow: auto; }
+.detail-link { display: inline-flex; align-items: center; text-decoration: none; margin-top: 18px; }
