@@ -48,14 +48,12 @@ Deno.serve(async (request) => {
     const { data: items, error: listError } = await client
       .from("learning_items")
       .select("id,title,author,raw_content,source_url")
-      .in("processing_status", ["pending", "failed"])
+      .in("processing_status", ["pending", "failed", "processing"])
       .order("created_at", { ascending: true })
       .limit(limit);
     if (listError) throw listError;
 
-    let processed = 0;
-    let failed = 0;
-    for (const item of items || []) {
+    const results = await Promise.all((items || []).map(async (item) => {
       await client.from("learning_items").update({ processing_status: "processing" }).eq("id", item.id);
       try {
         const sourceMaterial = [
@@ -75,6 +73,7 @@ Deno.serve(async (request) => {
             input: sourceMaterial,
             text: { format: { type: "json_schema", name: "learning_item_analysis", strict: true, schema: analysisSchema } },
           }),
+          signal: AbortSignal.timeout(45_000),
         });
         if (!aiResponse.ok) throw new Error(`OpenAI ${aiResponse.status}: ${await aiResponse.text()}`);
         const analysis = JSON.parse(getOutputText(await aiResponse.json()));
@@ -87,13 +86,15 @@ Deno.serve(async (request) => {
           processed_at: new Date().toISOString(),
         }).eq("id", item.id);
         if (updateError) throw updateError;
-        processed++;
+        return true;
       } catch (error) {
         console.error("Failed to process", item.id, error);
         await client.from("learning_items").update({ processing_status: "failed" }).eq("id", item.id);
-        failed++;
+        return false;
       }
-    }
+    }));
+    const processed = results.filter(Boolean).length;
+    const failed = results.length - processed;
     return new Response(JSON.stringify({ processed, failed, total: (items || []).length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
