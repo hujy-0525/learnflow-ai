@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="LearnFlow AI - 跨平台智能学习管理平台" />
+  <title>LearnFlow AI · 让收藏真正成为知识</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="connections.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">L</span><span>LearnFlow</span><em>AI</em></div>
+      <nav class="nav" aria-label="主导航">
+        <p class="nav-label">工作台</p>
+        <button class="nav-item active" data-view="home"><span>⌂</span>学习总览</button>
+        <button class="nav-item" data-view="inbox"><span>↓</span>智能收件箱<b>12</b></button>
+        <button class="nav-item" data-view="map"><span>⌘</span>知识地图</button>
+        <button class="nav-item" data-view="plans"><span>◇</span>学习场景</button>
+        <button class="nav-item" data-view="connections"><span>⛓</span>平台连接</button>
+        <p class="nav-label">我的领域</p>
+        <button class="domain-item"><i class="dot violet"></i>AI 产品设计<span>28</span></button>
+        <button class="domain-item"><i class="dot orange"></i>数据分析<span>16</span></button>
+        <button class="domain-item"><i class="dot green"></i>个人成长<span>21</span></button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="sync-line"><span class="pulse"></span>4 个平台同步正常</div>
+        <div class="profile"><div class="avatar">林</div><div><strong>林默</strong><small>本周学习 4.6h</small></div><button>•••</button></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search"><span>⌕</span><input id="globalSearch" placeholder="搜索笔记、主题或来源…" /><kbd>⌘ K</kbd></div>
+        <div class="top-actions"><button class="icon-btn" aria-label="通知">♢<i></i></button><button class="primary-btn" id="quickAdd">＋ 添加内容</button></div>
+      </header>
+
+      <section class="view active" id="home-view">
+        <div class="hero-row">
+          <div><p class="eyebrow">SUNDAY · 8月30日</p><h1>下午好，林默 <span>👋</span></h1><p class="subhead">你的知识网络正在生长。今天，从一个小问题开始。</p></div>
+          <button class="focus-btn" id="startFocus"><span>▶</span><div><small>继续上次学习</small><strong>AI Agent 产品设计</strong></div><em>12 min</em></button>
+        </div>
+
+        <div class="metrics">
+          <article><div class="metric-icon purple">↗</div><div><small>本周新增</small><strong>32</strong><span>条内容</span></div><em>+18%</em></article>
+          <article><div class="metric-icon blue">✓</div><div><small>AI 已整理</small><strong>28</strong><span>条内容</span></div><em>90% 准确率</em></article>
+          <article><div class="metric-icon amber">⌁</div><div><small>节省整理时间</small><strong>3.4</strong><span>小时</span></div><em>↓ 70%</em></article>
+          <article><div class="metric-icon mint">◎</div><div><small>知识连接</small><strong>126</strong><span>个节点</span></div><em>+14 本周</em></article>
+        </div>
+
+        <div class="content-grid">
+          <section class="panel feed-panel">
+            <div class="panel-head"><div><h2>智能收件箱</h2><p>AI 已发现并整理了 12 条新内容</p></div><button class="text-btn" data-go="inbox">查看全部 →</button></div>
+            <div id="feedList" class="feed-list"></div>
+          </section>
+          <aside class="right-column">
+            <section class="panel progress-panel">
+              <div class="panel-head"><div><h2>本周节奏</h2><p>连续学习 6 天</p></div><span class="fire">🔥 6</span></div>
+              <div class="week-bars" id="weekBars"></div>
+              <div class="progress-foot"><span>目标 5 小时</span><strong>4h 36m <em>/ 92%</em></strong></div>
+            </section>
+            <section class="panel insight-panel">
+              <div class="insight-top"><span>✦ AI 洞察</span><small>刚刚</small></div>
+              <h3>你正在形成一个新知识簇</h3>
+              <p>最近收藏的 7 条内容都与「AI Agent 的记忆机制」相关，要将它们整理为学习专题吗？</p>
+              <div class="mini-nodes"><span>RAG</span><span>长期记忆</span><span>向量库</span></div>
+              <button id="buildTopic">一键创建专题 <span>→</span></button>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="inbox-view">
+        <div class="page-title"><div><p class="eyebrow">AI INBOX</p><h1>智能收件箱</h1><p>来自 4 个平台的收藏，已自动总结并归类。</p></div><button class="primary-btn" id="organizeBtn">✦ AI 一键整理 <span>12</span></button></div>
+        <div class="toolbar"><div class="filter-tabs"><button class="active" data-filter="all">全部 32</button><button data-filter="xiaohongshu">小红书 12</button><button data-filter="bilibili">B站 9</button><button data-filter="wechat">公众号 7</button><button data-filter="web">网页 4</button></div><button class="outline-btn" id="toggleLayout">▦ 卡片视图</button></div>
+        <div class="library-grid" id="libraryGrid"></div>
+      </section>
+
+      <section class="view" id="map-view">
+        <div class="page-title"><div><p class="eyebrow">KNOWLEDGE GRAPH</p><h1>知识地图</h1><p>从零散收藏中，发现隐藏的学习脉络。</p></div><div class="legend"><span><i class="dot violet"></i>大类</span><span><i class="dot orange"></i>细分领域</span><span><i class="dot green"></i>内容类型</span></div></div>
+        <div class="map-layout">
+          <section class="graph-panel" id="graphPanel">
+            <div class="graph-controls"><button id="zoomIn">＋</button><button id="zoomOut">−</button><button id="resetGraph">⌖</button></div>
+            <div class="graph" id="graph">
+              <div class="node root" style="--x:50%;--y:48%">AI 产品设计<small>28 条</small></div>
+              <div class="node branch b1" style="--x:25%;--y:27%">Agent 设计<small>9 条</small></div>
+              <div class="node branch b2" style="--x:75%;--y:25%">用户体验<small>7 条</small></div>
+              <div class="node branch b3" style="--x:76%;--y:72%">模型能力<small>8 条</small></div>
+              <div class="node leaf l1" style="--x:13%;--y:57%">案例拆解</div><div class="node leaf l2" style="--x:28%;--y:78%">方法论</div><div class="node leaf l3" style="--x:53%;--y:15%">访谈</div><div class="node leaf l4" style="--x:91%;--y:49%">教程</div>
+              <svg aria-hidden="true"><line x1="50%" y1="48%" x2="25%" y2="27%"/><line x1="50%" y1="48%" x2="75%" y2="25%"/><line x1="50%" y1="48%" x2="76%" y2="72%"/><line x1="25%" y1="27%" x2="13%" y2="57%"/><line x1="25%" y1="27%" x2="28%" y2="78%"/><line x1="75%" y1="25%" x2="53%" y2="15%"/><line x1="76%" y1="72%" x2="91%" y2="49%"/></svg>
+            </div>
+          </section>
+          <aside class="panel taxonomy"><div class="panel-head"><div><h2>三级标签体系</h2><p>智能匹配准确率 95%</p></div><span class="accuracy">95%</span></div><div class="tag-tree"><div><span>01</span><strong>大类</strong><p>AI 产品设计</p></div><i></i><div><span>02</span><strong>细分领域</strong><p>Agent 设计</p></div><i></i><div><span>03</span><strong>内容类型</strong><p>案例拆解</p></div></div><button class="outline-btn full">管理标签体系</button></aside>
+        </div>
+      </section>
+
+      <section class="view" id="plans-view">
+        <div class="page-title"><div><p class="eyebrow">LEARNING SPACE</p><h1>学习场景</h1><p>AI 将你的收藏转化为可执行的学习路径。</p></div><button class="primary-btn" id="newPlan">＋ 新建学习场景</button></div>
+        <div class="plan-hero"><div><span class="plan-badge">✦ AI 推荐路径</span><h2>从 0 到 1 掌握 AI Agent 产品设计</h2><p>基于你收藏的 28 条高质量内容生成 · 预计 7 天完成</p><div class="plan-stats"><span><strong>5</strong> 个章节</span><span><strong>12</strong> 个任务</span><span><strong>4.5h</strong> 总时长</span></div><button id="enterPlan">开始学习 →</button></div><div class="roadmap"><span class="done">✓<small>基础认知</small></span><i></i><span class="active">2<small>核心机制</small></span><i></i><span>3<small>产品拆解</small></span><i></i><span>4<small>动手实践</small></span></div></div>
+        <h2 class="section-title">我的学习场景 <small>3</small></h2>
+        <div class="plan-grid"><article><div class="cover purple-cover">AI<br>AGENT<span>68%</span></div><h3>AI Agent 产品设计</h3><p>8 / 12 个任务已完成</p><progress value="68" max="100"></progress></article><article><div class="cover orange-cover">DATA<br>STORY<span>32%</span></div><h3>数据可视化叙事</h3><p>3 / 10 个任务已完成</p><progress value="32" max="100"></progress></article><article class="new-card" id="newCard"><span>＋</span><h3>探索新领域</h3><p>AI 帮你在 3 分钟内搭建学习路径</p></article></div>
+      </section>
+      <section class="view" id="connections-view">
+        <div class="page-title"><div><p class="eyebrow">CONNECTED SOURCES</p><h1>平台连接</h1><p>把散落在内容平台的收藏，自动汇入同一个学习入口。</p></div><div class="sync-status"><i></i><span><strong>同步服务正常</strong><small>上次检查：刚刚</small></span></div></div>
+        <div class="connection-notice"><span>i</span><div><strong>关于收藏夹自动同步</strong><p>开放能力通过官方 OAuth 接入；暂未开放收藏读取权限的平台，使用手机“分享到 LearnFlow”完成无复制同步。</p></div><button id="showGuide">查看安装指引 →</button></div>
+        <div class="connector-grid">
+          <article class="connector"><div class="connector-head"><div class="platform-logo douyin-logo">♪</div><div><h2>抖音</h2><p>分享同步 · 官方收藏 API 待开放</p></div><span class="state ready">可配置</span></div><div class="flow-row"><span>收藏 / 分享</span><i>→</i><span>发送到 LearnFlow</span><i>→</i><span class="target">学习</span></div><div class="connector-meta"><span>同步方式 <strong>系统分享菜单</strong></span><span>最近同步 <strong>12 分钟前</strong></span></div><button class="connect-btn">配置同步</button></article>
+          <article class="connector connected"><div class="connector-head"><div class="platform-logo bili-logo">B</div><div><h2>哔哩哔哩</h2><p>收藏夹增量同步</p></div><span class="state on"><i></i>已连接</span></div><div class="folder-map"><label>来源收藏夹</label><label>LearnFlow 领域</label><button>学习 <span>⌄</span></button><i>→</i><button>待 AI 归类 <span>⌄</span></button></div><div class="connector-meta"><span>已导入 <strong>28 条</strong></span><span>同步频率 <strong>每 15 分钟</strong></span></div><button class="connect-btn secondary">管理连接</button></article>
+          <article class="connector"><div class="connector-head"><div class="platform-logo xhs-logo">书</div><div><h2>小红书</h2><p>分享同步 · 官方收藏 API 待开放</p></div><span class="state ready">可配置</span></div><div class="flow-row"><span>收藏 / 分享</span><i>→</i><span>发送到 LearnFlow</span><i>→</i><span class="target">学习</span></div><div class="connector-meta"><span>同步方式 <strong>系统分享菜单</strong></span><span>最近同步 <strong>38 分钟前</strong></span></div><button class="connect-btn">配置同步</button></article>
+        </div>
+        <div class="sync-section"><div class="panel-head"><div><h2>最近同步记录</h2><p>内容进入后自动执行去重、摘要与三级标签匹配</p></div><button class="outline-btn" id="syncNow">↻ 立即检查</button></div><div class="sync-table"><div class="sync-row header"><span>内容</span><span>来源</span><span>同步方式</span><span>AI 处理</span><span>时间</span></div><div class="sync-row"><strong>Agent 产品的 5 个设计原则</strong><span>小红书</span><span>系统分享</span><span class="processed">✓ 已总结 · 已归类</span><time>10 分钟前</time></div><div class="sync-row"><strong>深入理解 RAG 完整链路</strong><span>哔哩哔哩</span><span>收藏夹：学习</span><span class="processed">✓ 已总结 · 已归类</span><time>32 分钟前</time></div><div class="sync-row"><strong>AI 产品的信任设计</strong><span>抖音</span><span>系统分享</span><span class="processed">✓ 已总结 · 已归类</span><time>1 小时前</time></div></div></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal"><button class="modal-close" id="modalClose">×</button><div class="ai-orb">✦</div><p class="eyebrow">AI QUICK CAPTURE</p><h2>收藏一个新知识</h2><p>粘贴小红书、B站、公众号或任意网页链接，AI 会自动提取、总结并归类。</p><label>内容链接</label><div class="url-input"><input id="urlInput" placeholder="https://…"/><button id="analyzeUrl">开始解析</button></div><div class="analyze-state" id="analyzeState"><span></span><p>正在提取内容并匹配知识标签…</p></div></div>
+  </div>
+  <div class="toast" id="toast"><span>✓</span><p></p></div>
+  <script src="app.js"></script>
+</body>
+</html>
