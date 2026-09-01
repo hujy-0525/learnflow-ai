@@ -2,10 +2,18 @@ function cleanUrl(raw) {
   try {
     const url = new URL(raw, location.origin);
     if (!/xiaohongshu\.com$/i.test(url.hostname) && !/\.xiaohongshu\.com$/i.test(url.hostname)) return null;
-    url.search = '';
+    const accessParams = new URLSearchParams();
+    ['xsec_token', 'xsec_source', 'source'].forEach(key => {
+      if (url.searchParams.has(key)) accessParams.set(key, url.searchParams.get(key));
+    });
+    url.search = accessParams.toString();
     url.hash = '';
     return url.href;
   } catch { return null; }
+}
+
+function extractNoteId(url) {
+  return url.match(/\/(?:explore|discovery\/item)\/([^/?#]+)/)?.[1] || null;
 }
 
 function extractTitle(anchor) {
@@ -24,11 +32,14 @@ function scrapeVisibleNotes() {
   const found = new Map();
   document.querySelectorAll(selectors.join(',')).forEach(anchor => {
     const url = cleanUrl(anchor.href);
-    if (!url || found.has(url)) return;
+    const noteId = url && extractNoteId(url);
+    const uniqueKey = noteId || url;
+    if (!url || found.has(uniqueKey)) return;
     const image = anchor.querySelector('img');
-    found.set(url, {
+    found.set(uniqueKey, {
       source: 'xiaohongshu',
       source_url: url,
+      external_id: noteId,
       title: extractTitle(anchor).slice(0, 300),
       cover_url: image?.src || null,
       sync_method: 'folder',
