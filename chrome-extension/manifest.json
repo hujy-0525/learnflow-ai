@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "LearnFlow 收藏同步",
-  "version": "0.2.0",
-  "description": "将小红书收藏夹中已加载的笔记一键同步到 LearnFlow。",
+  "version": "0.3.0",
+  "description": "将小红书收藏夹和笔记详情页的可见内容同步到 LearnFlow。",
   "permissions": ["activeTab", "tabs", "storage"],
   "host_permissions": [
     "https://www.xiaohongshu.com/*",

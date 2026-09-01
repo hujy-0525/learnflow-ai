@@ -4,6 +4,7 @@ const statusBox = document.getElementById('status');
 const syncBtn = document.getElementById('syncBtn');
 const resultBox = document.getElementById('result');
 let scannedItems = [];
+let scanMode = 'collection';
 
 function setStatus(text, type = '') {
   statusBox.className = `status ${type}`;
@@ -19,17 +20,20 @@ async function scan() {
   try {
     const response = await chrome.tabs.sendMessage(tab.id, { type: 'LEARNFLOW_SCAN_XHS' });
     scannedItems = response?.items || [];
+    scanMode = response?.mode || 'collection';
     resultBox.hidden = false;
     document.getElementById('itemCount').textContent = scannedItems.length;
     syncBtn.disabled = !scannedItems.length;
-    setStatus(scannedItems.length ? '已识别当前页面收藏' : '未发现已加载的收藏笔记', scannedItems.length ? 'ok' : 'error');
+    const successText = scanMode === 'detail' ? '已提取当前笔记正文' : '已识别当前页面收藏';
+    const emptyText = scanMode === 'detail-limited' ? '当前笔记正文尚未加载，请稍等后重试' : '未发现已加载的收藏笔记';
+    setStatus(scannedItems.length ? successText : emptyText, scannedItems.length ? 'ok' : 'error');
   } catch {
     setStatus('扩展尚未注入，请刷新小红书页面', 'error');
   }
 }
 
 syncBtn.onclick = async () => {
-  const keywords = document.getElementById('keywords').value.split(/[,，]/).map(x => x.trim().toLowerCase()).filter(Boolean);
+  const keywords = scanMode === 'detail' ? [] : document.getElementById('keywords').value.split(/[,，]/).map(x => x.trim().toLowerCase()).filter(Boolean);
   const filtered = keywords.length ? scannedItems.filter(item => keywords.some(key => item.title.toLowerCase().includes(key))) : scannedItems;
   if (!filtered.length) {
     setStatus('当前收藏中没有匹配关键词的标题', 'error');

@@ -16,6 +16,80 @@ function extractNoteId(url) {
   return url.match(/\/(?:explore|discovery\/item)\/([^/?#]+)/)?.[1] || null;
 }
 
+function compactText(value, max = 12000) {
+  return value?.replace(/\s+/g, ' ').trim().slice(0, max) || null;
+}
+
+function metaContent(...selectors) {
+  for (const selector of selectors) {
+    const value = document.querySelector(selector)?.getAttribute('content');
+    if (value?.trim()) return value.trim();
+  }
+  return null;
+}
+
+function firstText(selectors, max) {
+  for (const selector of selectors) {
+    const nodes = [...document.querySelectorAll(selector)];
+    const value = nodes.map(node => compactText(node.innerText || node.textContent, max)).find(Boolean);
+    if (value) return value;
+  }
+  return null;
+}
+
+function jsonLdNote() {
+  for (const node of document.querySelectorAll('script[type="application/ld+json"]')) {
+    try {
+      const parsed = JSON.parse(node.textContent);
+      const values = Array.isArray(parsed) ? parsed : [parsed];
+      const item = values.find(value => value && (value.headline || value.description || value.articleBody));
+      if (item) return item;
+    } catch {}
+  }
+  return {};
+}
+
+function scrapeDetailNote() {
+  const sourceUrl = cleanUrl(location.href);
+  const noteId = sourceUrl && extractNoteId(sourceUrl);
+  if (!noteId) return null;
+
+  const structured = jsonLdNote();
+  const title = firstText([
+    '#detail-title',
+    '[class*="note-detail"] [class*="title"]',
+    '[class*="note-content"] [class*="title"]',
+    'article h1',
+    'main h1'
+  ], 300) || structured.headline || metaContent('meta[property="og:title"]', 'meta[name="twitter:title"]') || document.title;
+  const body = firstText([
+    '#detail-desc',
+    '[class*="note-detail"] [class*="desc"]',
+    '[class*="note-content"] [class*="desc"]',
+    '[class*="content"] [class*="note-text"]',
+    'article [class*="content"]'
+  ], 12000) || structured.articleBody || structured.description || metaContent('meta[name="description"]', 'meta[property="og:description"]');
+  const author = firstText([
+    '[class*="note-detail"] [class*="author"] [class*="name"]',
+    '[class*="author-container"] [class*="name"]',
+    '[class*="user"] [class*="name"]'
+  ], 120) || structured.author?.name || null;
+  const cover = metaContent('meta[property="og:image"]', 'meta[name="twitter:image"]') ||
+    document.querySelector('[class*="note-detail"] img, [class*="swiper"] img, article img')?.src || null;
+
+  return {
+    source: 'xiaohongshu',
+    source_url: sourceUrl,
+    external_id: noteId,
+    title: compactText(title, 300) || '小红书收藏笔记',
+    author: compactText(author, 120),
+    raw_content: compactText(body, 12000),
+    cover_url: cover,
+    sync_method: 'detail-page',
+    processing_status: 'pending'
+  };
+}
+
 function extractTitle(anchor) {
   const candidates = [
     anchor.getAttribute('title'),
@@ -59,8 +133,14 @@ function scrapeVisibleNotes() {
   return [...found.values()];
 }
 
+function scanCurrentPage() {
+  const detail = scrapeDetailNote();
+  if (detail?.raw_content) return { items: [detail], mode: 'detail' };
+  return { items: scrapeVisibleNotes(), mode: detail ? 'detail-limited' : 'collection' };
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type !== 'LEARNFLOW_SCAN_XHS') return;
-  const items = scrapeVisibleNotes();
-  sendResponse({ ok: true, items, pageTitle: document.title, pageUrl: location.href });
+  const result = scanCurrentPage();
+  sendResponse({ ok: true, ...result, pageTitle: document.title, pageUrl: location.href });
 });
