@@ -17,13 +17,26 @@ const analysisSchema = {
   required: ["summary", "category", "subcategory", "content_type"],
 };
 
-function getOutputText(response: any): string {
-  for (const item of response.output || []) {
-    for (const part of item.content || []) {
-      if (part.type === "output_text") return part.text;
-    }
+const categoryOptions = analysisSchema.properties.category.enum;
+const contentTypeOptions = analysisSchema.properties.content_type.enum;
+
+function parseAnalysis(response: any) {
+  const content = response?.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) {
+    throw new Error("DeepSeek response did not contain message content");
   }
-  throw new Error("OpenAI response did not contain output_text");
+  const result = JSON.parse(content);
+  if (typeof result.summary !== "string" || !result.summary.trim()) {
+    throw new Error("DeepSeek response is missing summary");
+  }
+  return {
+    summary: result.summary.trim(),
+    category: categoryOptions.includes(result.category) ? result.category : "其他",
+    subcategory: typeof result.subcategory === "string" && result.subcategory.trim()
+      ? result.subcategory.trim().slice(0, 24)
+      : "待进一步整理",
+    content_type: contentTypeOptions.includes(result.content_type) ? result.content_type : "其他",
+  };
 }
 
 Deno.serve(async (request) => {
@@ -34,8 +47,8 @@ Deno.serve(async (request) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiKey) throw new Error("OPENAI_API_KEY is not configured");
+    const deepseekKey = Deno.env.get("DEEPSEEK_API_KEY");
+    if (!deepseekKey) throw new Error("DEEPSEEK_API_KEY is not configured");
 
     const client = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -62,21 +75,25 @@ Deno.serve(async (request) => {
           `页面可见内容：${item.raw_content || "未采集到正文，仅可根据标题判断"}`,
           `来源链接：${item.source_url}`,
         ].join("\n");
-        const aiResponse = await fetch("https://api.openai.com/v1/responses", {
+        const aiResponse = await fetch("https://api.deepseek.com/chat/completions", {
           method: "POST",
-          headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+          headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "gpt-5.4-mini",
-            store: false,
-            reasoning: { effort: "low" },
-            instructions: "你是个人学习知识管理助手。根据用户已合法采集的页面可见信息生成忠实摘要与三级标签。材料不足时明确写出信息有限，不得虚构正文、观点或结论。",
-            input: sourceMaterial,
-            text: { format: { type: "json_schema", name: "learning_item_analysis", strict: true, schema: analysisSchema } },
+            model: "deepseek-v4-flash",
+            messages: [
+              {
+                role: "system",
+                content: `你是个人学习知识管理助手。根据用户已合法采集的页面可见信息生成忠实摘要与三级标签。材料不足时明确写出信息有限，不得虚构正文、观点或结论。只输出一个 JSON 对象，字段必须为 summary、category、subcategory、content_type。category 只能从 ${categoryOptions.join("、")} 中选择；content_type 只能从 ${contentTypeOptions.join("、")} 中选择。`,
+              },
+              { role: "user", content: sourceMaterial },
+            ],
+            response_format: { type: "json_object" },
+            max_tokens: 800,
           }),
           signal: AbortSignal.timeout(45_000),
         });
-        if (!aiResponse.ok) throw new Error(`OpenAI ${aiResponse.status}: ${await aiResponse.text()}`);
-        const analysis = JSON.parse(getOutputText(await aiResponse.json()));
+        if (!aiResponse.ok) throw new Error(`DeepSeek ${aiResponse.status}: ${await aiResponse.text()}`);
+        const analysis = parseAnalysis(await aiResponse.json());
         const { error: updateError } = await client.from("learning_items").update({
           summary: analysis.summary,
           category: analysis.category,
