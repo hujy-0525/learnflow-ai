@@ -30,3 +30,9 @@ python -m http.server 8080
 3. 点击「加载已解压的扩展程序」
 4. 选择本项目的 `chrome-extension` 文件夹
 5. 登录小红书网页版并打开收藏夹，滚动加载内容后点击扩展同步
+
+## AI 处理流水线
+
+`supabase/functions/process-learning-items` 是服务端 Edge Function：使用当前用户 JWT 读取其待处理收藏，调用 OpenAI Responses API Structured Outputs 生成摘要与「大类—细分领域—内容类型」标签，再将状态更新为 `completed`。
+
+部署前需要在 Supabase Edge Function Secrets 中设置 `OPENAI_API_KEY`，密钥不得提交到仓库或放入浏览器代码。

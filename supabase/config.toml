@@ -1,0 +1,4 @@
+project_id = "phzsflusdfgpahbudioz"
+
+[functions.process-learning-items]
+verify_jwt = true

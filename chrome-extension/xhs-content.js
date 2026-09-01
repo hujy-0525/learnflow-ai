@@ -27,6 +27,13 @@ function extractTitle(anchor) {
   return candidates.map(value => value?.trim()).find(value => value && value.length > 1) || '小红书收藏笔记';
 }
 
+function extractCardData(anchor) {
+  const card = anchor.closest('section,article,div[class*="note"],div[class*="feeds"]') || anchor.parentElement;
+  const author = card?.querySelector('[class*="author"],[class*="name"],[class*="user"]')?.textContent?.trim() || null;
+  const visibleText = card?.innerText?.replace(/\s+/g, ' ').trim() || '';
+  return { author, rawContent: visibleText.slice(0, 4000) || null };
+}
+
 function scrapeVisibleNotes() {
   const selectors = ['a[href*="/explore/"]', 'a[href*="/discovery/item/"]'];
   const found = new Map();
@@ -36,11 +43,14 @@ function scrapeVisibleNotes() {
     const uniqueKey = noteId || url;
     if (!url || found.has(uniqueKey)) return;
     const image = anchor.querySelector('img');
+    const cardData = extractCardData(anchor);
     found.set(uniqueKey, {
       source: 'xiaohongshu',
       source_url: url,
       external_id: noteId,
       title: extractTitle(anchor).slice(0, 300),
+      author: cardData.author,
+      raw_content: cardData.rawContent,
       cover_url: image?.src || null,
       sync_method: 'folder',
       processing_status: 'pending'
