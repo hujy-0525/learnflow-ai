@@ -80,6 +80,7 @@ Deno.serve(async (request) => {
           headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "deepseek-v4-flash",
+            thinking: { type: "disabled" },
             messages: [
               {
                 role: "system",
@@ -88,9 +89,9 @@ Deno.serve(async (request) => {
               { role: "user", content: sourceMaterial },
             ],
             response_format: { type: "json_object" },
-            max_tokens: 800,
+            max_tokens: 500,
           }),
-          signal: AbortSignal.timeout(45_000),
+          signal: AbortSignal.timeout(20_000),
         });
         if (!aiResponse.ok) throw new Error(`DeepSeek ${aiResponse.status}: ${await aiResponse.text()}`);
         const analysis = parseAnalysis(await aiResponse.json());
@@ -103,16 +104,20 @@ Deno.serve(async (request) => {
           processed_at: new Date().toISOString(),
         }).eq("id", item.id);
         if (updateError) throw updateError;
-        return true;
+        return { id: item.id, ok: true };
       } catch (error) {
         console.error("Failed to process", item.id, error);
         await client.from("learning_items").update({ processing_status: "failed" }).eq("id", item.id);
-        return false;
+        return {
+          id: item.id,
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
       }
     }));
-    const processed = results.filter(Boolean).length;
+    const processed = results.filter((result) => result.ok).length;
     const failed = results.length - processed;
-    return new Response(JSON.stringify({ processed, failed, total: (items || []).length }), {
+    return new Response(JSON.stringify({ processed, failed, total: (items || []).length, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
