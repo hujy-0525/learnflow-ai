@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="connections.css" />
+  <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
   <div class="app-shell">
@@ -36,7 +37,7 @@
     <main class="main">
       <header class="topbar">
         <div class="search"><span>⌕</span><input id="globalSearch" placeholder="搜索笔记、主题或来源…" /><kbd>⌘ K</kbd></div>
-        <div class="top-actions"><button class="icon-btn" aria-label="通知">♢<i></i></button><button class="primary-btn" id="quickAdd">＋ 添加内容</button></div>
+        <div class="top-actions"><button class="auth-btn" id="authBtn">登录</button><button class="icon-btn" aria-label="通知">♢<i></i></button><button class="primary-btn" id="quickAdd">＋ 添加内容</button></div>
       </header>
 
       <section class="view active" id="home-view">
@@ -120,7 +121,11 @@
   <div class="modal-backdrop" id="modalBackdrop">
     <div class="modal"><button class="modal-close" id="modalClose">×</button><div class="ai-orb">✦</div><p class="eyebrow">AI QUICK CAPTURE</p><h2>收藏一个新知识</h2><p>粘贴小红书、B站、公众号或任意网页链接，AI 会自动提取、总结并归类。</p><label>内容链接</label><div class="url-input"><input id="urlInput" placeholder="https://…"/><button id="analyzeUrl">开始解析</button></div><div class="analyze-state" id="analyzeState"><span></span><p>正在提取内容并匹配知识标签…</p></div></div>
   </div>
+  <div class="modal-backdrop" id="authBackdrop">
+    <div class="modal auth-modal"><button class="modal-close" id="authClose">×</button><div class="ai-orb">L</div><p class="eyebrow">WELCOME TO LEARNFLOW</p><h2>登录你的知识空间</h2><p>输入邮箱，我们会发送一封安全登录邮件，无需设置密码。</p><label>邮箱地址</label><div class="url-input"><input id="emailInput" type="email" placeholder="name@example.com"/><button id="sendMagicLink">发送登录邮件</button></div><div class="auth-message" id="authMessage"></div></div>
+  </div>
   <div class="toast" id="toast"><span>✓</span><p></p></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
