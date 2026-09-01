@@ -1,4 +1,4 @@
-const LEARNFLOW_URL = 'https://hujy-0525.github.io/learnflow-ai/?source=extension';
+const LEARNFLOW_URL = 'https://hujy-0525.github.io/learnflow-ai/?source=extension&v=cf66dfa';
 const STORAGE_KEY = 'learnflowPendingSync';
 const statusBox = document.getElementById('status');
 const syncBtn = document.getElementById('syncBtn');
