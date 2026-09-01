@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="popup.css"><title>LearnFlow 同步</title></head>
+<body>
+  <header><span class="logo">L</span><div><strong>LearnFlow</strong><small>小红书收藏同步</small></div></header>
+  <main>
+    <div class="status" id="status"><i></i><span>正在检查当前页面…</span></div>
+    <section class="result" id="result" hidden><div><strong id="itemCount">0</strong><span>条已加载收藏</span></div><p>只会同步当前页面已加载的笔记，重复内容将自动跳过。</p></section>
+    <label class="filter"><span>关键词筛选</span><input id="keywords" value="AI,人工智能,大模型,产品,Agent,RAG" placeholder="用逗号分隔；留空则全部同步"></label>
+    <button id="syncBtn" disabled>一键同步到 LearnFlow</button>
+    <button class="secondary" id="openLearnFlow">打开 LearnFlow</button>
+    <p class="tip">提示：先滚动收藏夹，让更多笔记加载出来。</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

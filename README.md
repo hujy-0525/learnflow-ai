@@ -20,3 +20,13 @@ python -m http.server 8080
 - 可缩放的知识关系图谱
 - 从收藏内容自动生成学习场景与执行路径
 - 桌面端与移动端响应式布局
+
+## Chrome 扩展（小红书）
+
+`chrome-extension/` 提供 Manifest V3 扩展，可扫描小红书网页版收藏夹中当前已加载的笔记，并通过已登录的 LearnFlow 页面批量写入 Supabase。
+
+1. 打开 `chrome://extensions/`
+2. 开启「开发者模式」
+3. 点击「加载已解压的扩展程序」
+4. 选择本项目的 `chrome-extension` 文件夹
+5. 登录小红书网页版并打开收藏夹，滚动加载内容后点击扩展同步
