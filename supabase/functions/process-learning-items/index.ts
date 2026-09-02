@@ -46,6 +46,38 @@ function splitCapturedContent(rawContent: string | null) {
   return { text: text.trim(), imageUrls };
 }
 
+function bytesToBase64(bytes: Uint8Array) {
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return btoa(binary);
+}
+
+async function downloadImage(url: string) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "Referer": "https://www.xiaohongshu.com/",
+        "User-Agent": "Mozilla/5.0 LearnFlow/1.0",
+        "Accept": "image/avif,image/webp,image/png,image/jpeg,image/gif,*/*",
+      },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) return null;
+    const mime = (response.headers.get("content-type") || "").split(";")[0];
+    if (!/^image\/(jpeg|png|gif|webp)$/i.test(mime)) return null;
+    const declaredSize = Number(response.headers.get("content-length") || 0);
+    if (declaredSize > 3_000_000) return null;
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (!bytes.length || bytes.length > 3_000_000) return null;
+    return `data:${mime};base64,${bytesToBase64(bytes)}`;
+  } catch (error) {
+    console.warn("Could not download image", url, error);
+    return null;
+  }
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -73,26 +105,30 @@ Deno.serve(async (request) => {
       .limit(limit);
     if (listError) throw listError;
 
-    const results = await Promise.all((items || []).map(async (item) => {
+    const results = [];
+    const queue = items || [];
+    for (let offset = 0; offset < queue.length; offset += 4) {
+      const batchResults = await Promise.all(queue.slice(offset, offset + 4).map(async (item) => {
       await client.from("learning_items").update({ processing_status: "processing" }).eq("id", item.id);
       try {
         const captured = splitCapturedContent(item.raw_content);
-        const imageUrls = [...new Set([item.cover_url, ...captured.imageUrls].filter(Boolean))].slice(0, 9);
+        const imageUrls = [...new Set([item.cover_url, ...captured.imageUrls].filter(Boolean))].slice(0, 6);
+        const downloadedImages = (await Promise.all(imageUrls.map(downloadImage))).filter(Boolean);
         const sourceMaterial = [
           `标题：${item.title || "未知"}`,
           `作者：${item.author || "未知"}`,
           `页面可见正文：${captured.text || "未采集到正文，请结合图片中的公开信息判断"}`,
           `来源链接：${item.source_url}`,
         ].join("\n");
-        const userContent = imageUrls.length ? [
+        const userContent = downloadedImages.length ? [
           { type: "text", text: `${sourceMaterial}\n\n请阅读所附图片中的文字和画面信息，并与正文合并分析。` },
-          ...imageUrls.map((url) => ({ type: "image_url", image_url: { url, detail: "original" } })),
+          ...downloadedImages.map((url) => ({ type: "image_url", image_url: { url, detail: "original" } })),
         ] : sourceMaterial;
         const aiResponse = await fetch("https://api.deepseek.com/chat/completions", {
           method: "POST",
           headers: { "Authorization": `Bearer ${deepseekKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: imageUrls.length ? "deepseek-v4-flash-vision-exp" : "deepseek-v4-flash",
+            model: downloadedImages.length ? "deepseek-v4-flash-vision-exp" : "deepseek-v4-flash",
             thinking: { type: "disabled" },
             messages: [
               {
@@ -104,7 +140,7 @@ Deno.serve(async (request) => {
             response_format: { type: "json_object" },
             max_tokens: 500,
           }),
-          signal: AbortSignal.timeout(imageUrls.length ? 40_000 : 20_000),
+          signal: AbortSignal.timeout(downloadedImages.length ? 45_000 : 20_000),
         });
         if (!aiResponse.ok) throw new Error(`DeepSeek ${aiResponse.status}: ${await aiResponse.text()}`);
         const analysis = parseAnalysis(await aiResponse.json());
@@ -117,7 +153,7 @@ Deno.serve(async (request) => {
           processed_at: new Date().toISOString(),
         }).eq("id", item.id);
         if (updateError) throw updateError;
-        return { id: item.id, ok: true };
+        return { id: item.id, ok: true, imagesCaptured: imageUrls.length, imagesRead: downloadedImages.length };
       } catch (error) {
         console.error("Failed to process", item.id, error);
         await client.from("learning_items").update({ processing_status: "failed" }).eq("id", item.id);
@@ -127,7 +163,9 @@ Deno.serve(async (request) => {
           error: error instanceof Error ? error.message : String(error),
         };
       }
-    }));
+      }));
+      results.push(...batchResults);
+    }
     const processed = results.filter((result) => result.ok).length;
     const failed = results.length - processed;
     return new Response(JSON.stringify({ processed, failed, total: (items || []).length, results }), {

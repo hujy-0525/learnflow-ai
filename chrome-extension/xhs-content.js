@@ -91,6 +91,7 @@ function scrapeDetailNote() {
     author: compactText(author, 120),
     raw_content: `${compactText(body, 12000) || ''}${imageManifest}`.trim() || null,
     cover_url: cover,
+    image_count: detailImages.slice(0, 9).length,
     sync_method: 'detail-page',
     processing_status: 'pending'
   };
@@ -141,7 +142,7 @@ function scrapeVisibleNotes() {
 
 function scanCurrentPage() {
   const detail = scrapeDetailNote();
-  if (detail?.raw_content) return { items: [detail], mode: 'detail' };
+  if (detail?.raw_content) return { items: [detail], mode: 'detail', imageCount: detail.image_count || 0 };
   return { items: scrapeVisibleNotes(), mode: detail ? 'detail-limited' : 'collection' };
 }
 

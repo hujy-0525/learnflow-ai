@@ -24,7 +24,7 @@ async function scan() {
     resultBox.hidden = false;
     document.getElementById('itemCount').textContent = scannedItems.length;
     syncBtn.disabled = !scannedItems.length;
-    const successText = scanMode === 'detail' ? '已提取当前笔记正文' : '已识别当前页面收藏';
+    const successText = scanMode === 'detail' ? `已提取正文和 ${response?.imageCount || 0} 张图片` : '已识别当前页面收藏';
     const emptyText = scanMode === 'detail-limited' ? '当前笔记正文尚未加载，请稍等后重试' : '未发现已加载的收藏笔记';
     setStatus(scannedItems.length ? successText : emptyText, scannedItems.length ? 'ok' : 'error');
   } catch {

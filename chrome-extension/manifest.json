@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LearnFlow 收藏同步",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "将小红书收藏夹、详情正文和内容图片同步到 LearnFlow。",
   "permissions": ["activeTab", "tabs", "storage"],
   "host_permissions": [
